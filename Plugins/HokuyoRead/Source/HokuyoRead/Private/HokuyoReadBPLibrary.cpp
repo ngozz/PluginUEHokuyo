@@ -2,8 +2,6 @@
 
 #include "HokuyoReadBPLibrary.h"
 #include "HokuyoRead.h"
-#include "urg_sensor.h"
-#include "urg_utils.h"
 
 bool UHokuyoReadBPLibrary::testFunction(float value, int value2, FString& ReturnValue2)
 {
@@ -16,73 +14,103 @@ bool UHokuyoReadBPLibrary::hokuyoTest(int value, int& ReturnPew)
 	return true;
 }
 
-bool UHokuyoReadBPLibrary::hokuyoRead()
+void UHokuyoReadBPLibrary::closeConnectionifFalse(bool Result, UPARAM(ref) FUrgWrapper& UrgWrapper)
 {
-	enum {
-		CAPTURE_TIMES = 99,
-	};
-	urg_t urg;
-	int ret;
-	long* data;
-	int data_max;
-	long time_stamp;
-	int i;
-
-	// Open the connection with the device
-	ret = urg_open(&urg, URG_ETHERNET, "192.168.3.202", 10940);
-	if (ret < 0) {
-		return false;
+    if (!Result) {
+		closeConnection(UrgWrapper);
 	}
+}
 
-	// Get length datas
-	data_max = urg_max_data_size(&urg);
-	data = (long*)malloc(sizeof(long) * data_max);
-	if (data == nullptr) {
-		return false;
-	}
+bool UHokuyoReadBPLibrary::openConnection(UPARAM(ref) FUrgWrapper& UrgWrapper)
+{
+    urg_t& urg = UrgWrapper.Urg;
+    int ret;
+    // Open the connection with the device
+    ret = urg_open(&urg, URG_ETHERNET, "192.168.3.202", 10940);
+    //ret = urg_open(&urg, URG_SERIAL, "COM3", 115200); //Example of serial connection. COM3 is the port name, 115200 is the baudrate.
+    if (ret < 0) {
+        return false;
+    }
+    return true;
+}
 
-	// \~english Case where the measurement range (start/end steps) is defined
-	urg_set_scanning_parameter(&urg,
-		urg_deg2step(&urg, -1),
-		urg_deg2step(&urg, +1), 0);
+bool UHokuyoReadBPLibrary::setScanningParameters(UPARAM(ref) FUrgWrapper& UrgWrapper)
+{
+    urg_t& urg = UrgWrapper.Urg;
 
-	urg_start_measurement(&urg, URG_DISTANCE, URG_SCAN_INFINITY, 0, 1);
-	// Get datas
-	for (i = 0; i < CAPTURE_TIMES; ++i) {
-		ret = urg_get_distance(&urg, data, &time_stamp);
-		if (ret <= 0) {
-			free(data);
-			urg_close(&urg);
-			return false;
-		}
-		(void)time_stamp;
+    // \~english Case where the measurement range (start/end steps) is defined
+    urg_set_scanning_parameter(&urg,
+        urg_deg2step(&urg, -1),
+        urg_deg2step(&urg, +1), 0);
 
-		int j;
-		long min_distance;
-		long max_distance;
-		urg_distance_min_max(&urg, &min_distance, &max_distance);
-		for (j = 0; j < ret; ++j) {
-			long l = data[j];
-			double radian;
+    return true;
+}
 
-			if ((l <= min_distance) || (l >= max_distance)) {
-				continue;
-			}
-			radian = urg_index2rad(&urg, j);
-			int32 x = (int32)(l * cos(radian));
-			int32 y = (int32)(l * sin(radian));
-			// Print x and y values in real-time
-			FString xString = FString::FromInt(x);
-			FString yString = FString::FromInt(y);
-			FString xyString = "x: " + xString + ", y: " + yString;
-			if (GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, xyString);
-		}
-	}
+bool UHokuyoReadBPLibrary::getDistance(UPARAM(ref) FUrgWrapper& UrgWrapper)
+{
+    urg_t& urg = UrgWrapper.Urg;
+    enum {
+        CAPTURE_TIMES = 99,
+    };
+    int ret;
+    long* data;
+    int data_max;
+    long time_stamp;
+    int i;
 
-	// Close the connection
-	free(data);
-	urg_close(&urg);
+    // Get length datas
+    data_max = urg_max_data_size(&urg);
+    data = (long*)malloc(sizeof(long) * data_max);
+    if (data == nullptr) {
+        urg_close(&urg);
+        return false;
+    }
 
-	return true;
+    urg_start_measurement(&urg, URG_DISTANCE, URG_SCAN_INFINITY, 0, 1);
+    // Get datas
+    for (i = 0; i < CAPTURE_TIMES; ++i) {
+        ret = urg_get_distance(&urg, data, &time_stamp);
+        if (ret <= 0) {
+            free(data);
+            urg_close(&urg);
+            return false;
+        }
+        (void)time_stamp;
+
+        int j;
+        long min_distance;
+        long max_distance;
+        urg_distance_min_max(&urg, &min_distance, &max_distance);
+        for (j = 0; j < ret; ++j) {
+            long l = data[j];
+            double radian;
+
+            if ((l <= min_distance) || (l >= max_distance)) {
+                continue;
+            }
+            radian = urg_index2rad(&urg, j);
+            int32 x = (int32)(l * cos(radian));
+            int32 y = (int32)(l * sin(radian));
+            // Print x and y values in real-time
+            FString xString = FString::FromInt(x);
+            FString yString = FString::FromInt(y);
+            FString xyString = "x: " + xString + ", y: " + yString;
+            if (GEngine)
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, xyString);
+        }
+    }
+
+    // Free memory
+    free(data);
+
+    return true;
+}
+
+bool UHokuyoReadBPLibrary::closeConnection(UPARAM(ref) FUrgWrapper& UrgWrapper)
+{
+    urg_t& urg = UrgWrapper.Urg;
+    // Close the connection
+    urg_close(&urg);
+
+    return true;
 }
