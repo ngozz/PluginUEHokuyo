@@ -26,8 +26,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static bool openConnection(UPARAM(ref) FUrgWrapper& UrgWrapper); //UPARAM(ref) is used to pass a reference to the struct. UE doesn't support references by default using '&'.
 
-	//get the distance
-	UFUNCTION(BlueprintCallable)
+	//get scanning distance results
+	UFUNCTION()
 	static bool getDistance(UPARAM(ref) FUrgWrapper& UrgWrapper, int CaptureTimes);
 
 	//close the connection
@@ -50,6 +50,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static bool hokuyoTest(int value, int& ReturnPew);
 
-	UFUNCTION(BlueprintCallable)
+	//async function that calls getDistance. This is used to call getDistance in a non-blocking way.
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Get Sensor Distance Result", ToolTip = "@param CaptureTimes 0 means it will run indefinitely"))
 	static void getDistanceNonBlocking(UPARAM(ref) FUrgWrapper& UrgWrapper, int CaptureTimes);
 };

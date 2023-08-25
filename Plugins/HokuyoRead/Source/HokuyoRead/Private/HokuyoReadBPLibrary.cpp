@@ -98,7 +98,6 @@ bool UHokuyoReadBPLibrary::getDistance(UPARAM(ref) FUrgWrapper& UrgWrapper, int 
         }
     }
 
-
     // Free memory
     free(data);
 
