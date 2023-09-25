@@ -1,0 +1,15 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.HokuyoRead.cpp.obj": [
+			"DBSCANClustering.cpp.obj",
+			"HokuyoInterface.cpp.obj",
+			"HokuyoRead.cpp.obj",
+			"HokuyoReadBPLibrary.cpp.obj",
+			"KmeansClustering.cpp.obj",
+			"HokuyoInterface.gen.cpp.obj",
+			"HokuyoRead.init.gen.cpp.obj",
+			"HokuyoReadBPLibrary.gen.cpp.obj"
+		]
+	}
+}

@@ -16,7 +16,7 @@
 	"Modules": [
 		{
 			"Name": "HokuyoRead",
-			"Type": "Developer",
+			"Type": "DeveloperTool",
 			"LoadingPhase": "PreLoadingScreen",
 			"PlatformAllowList": [
 				"Win64"
